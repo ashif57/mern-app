@@ -1,0 +1,126 @@
+# ============================================
+# Dependencies
+# ============================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.pnpm-store/
+
+# ============================================
+# Environment Variables
+# ============================================
+.env
+.env.*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+
+# ============================================
+# Logs
+# ============================================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ============================================
+# Runtime & Process Files
+# ============================================
+pids/
+*.pid
+*.seed
+*.pid.lock
+lib-cov
+
+# ============================================
+# Build Output
+# ============================================
+dist/
+dist-ssr/
+build/
+.cache/
+*.local
+
+# ============================================
+# Testing & Coverage
+# ============================================
+coverage/
+.nyc_output/
+*.lcov
+
+# ============================================
+# IDE & Editor Files
+# ============================================
+.vscode/
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+.project
+.classpath
+.settings/
+
+# ============================================
+# OS Files
+# ============================================
+Thumbs.db
+.DS_Store
+desktop.ini
+$RECYCLE.BIN/
+
+# ============================================
+# Docker
+# ============================================
+docker-compose.override.yml
+.docker/
+
+# ============================================
+# Database
+# ============================================
+*.sqlite
+*.sqlite3
+*.db
+
+# ============================================
+# Temporary Files
+# ============================================
+tmp/
+temp/
+*.tmp
+.temp/
+
+# ============================================
+# Optional: npm
+# ============================================
+.npm
+.eslintcache
+.node_repl_history
+.yarn-integrity
+
+# ============================================
+# Optional: TypeScript
+# ============================================
+*.tsbuildinfo
+
+# ============================================
+# Optional: Next.js (if using)
+# ============================================
+.next/
+out/
+
+# ============================================
+# Optional: Vite (if using)
+# ============================================
+.vite/

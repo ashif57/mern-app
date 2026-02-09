@@ -1,0 +1,162 @@
+version: '3.8'
+
+services:
+  # ============================================
+  # MongoDB Database Service
+  # ============================================
+  mongodb:
+    image: mongo:7.0-jammy
+    container_name: mern-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-password123}
+      MONGO_INITDB_DATABASE: ${MONGO_DATABASE:-mern_db}
+    ports:
+      - "${MONGO_PORT:-27017}:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+    networks:
+      - mern-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    command: mongod --auth
+
+  # ============================================
+  # Redis Cache Service
+  # ============================================
+  redis:
+    image: redis:7.2-alpine
+    container_name: mern-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - mern-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 30s
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis123}
+
+  # ============================================
+  # Node.js Backend Application
+  # ============================================
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: mern-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: ${APP_PORT:-3000}
+      
+      # MongoDB Configuration
+      MONGO_URI: mongodb://${MONGO_ROOT_USERNAME:-admin}:${MONGO_ROOT_PASSWORD:-password123}@mongodb:27017/${MONGO_DATABASE:-mern_db}?authSource=admin
+      
+      # Redis Configuration
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-redis123}
+      
+      # Application Configuration
+      JWT_SECRET: ${JWT_SECRET:-your-secret-key-change-in-production}
+      API_BASE_URL: ${API_BASE_URL:-http://localhost:3000}
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    volumes:
+      # For development, mount source code (comment out in production)
+      # - ./:/app
+      # - /app/node_modules
+      - app_logs:/app/logs
+    networks:
+      - mern-network
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 40s
+
+  # ============================================
+  # Optional: Mongo Express (MongoDB Web UI)
+  # ============================================
+  # mongo-express:
+  #   image: mongo-express:1.0-20-alpine3.19
+  #   container_name: mern-mongo-express
+  #   restart: unless-stopped
+  #   ports:
+  #     - "${MONGO_EXPRESS_PORT:-8081}:8081"
+  #   environment:
+  #     ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_ROOT_USERNAME:-admin}
+  #     ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_ROOT_PASSWORD:-password123}
+  #     ME_CONFIG_MONGODB_URL: mongodb://${MONGO_ROOT_USERNAME:-admin}:${MONGO_ROOT_PASSWORD:-password123}@mongodb:27017/
+  #     ME_CONFIG_BASICAUTH_USERNAME: ${MONGO_EXPRESS_USER:-admin}
+  #     ME_CONFIG_BASICAUTH_PASSWORD: ${MONGO_EXPRESS_PASSWORD:-pass}
+  #   networks:
+  #     - mern-network
+  #   depends_on:
+  #     mongodb:
+  #       condition: service_healthy
+  #   profiles:
+  #     - debug
+
+  # ============================================
+  # Optional: Redis Commander (Redis Web UI)
+  # ============================================
+  # redis-commander:
+  #   image: rediscommander/redis-commander:latest
+  #   container_name: mern-redis-commander
+  #   restart: unless-stopped
+  #   ports:
+  #     - "${REDIS_COMMANDER_PORT:-8082}:8081"
+  #   environment:
+  #     REDIS_HOSTS: local:redis:6379:0:${REDIS_PASSWORD:-redis123}
+  #   networks:
+  #     - mern-network
+  #   depends_on:
+  #     redis:
+  #       condition: service_healthy
+  #   profiles:
+  #     - debug
+
+# ============================================
+# Networks
+# ============================================
+networks:
+  mern-network:
+    driver: bridge
+    name: mern-network
+
+# ============================================
+# Volumes (Persistent Data)
+# ============================================
+volumes:
+  mongodb_data:
+    driver: local
+    name: mern_mongodb_data
+  mongodb_config:
+    driver: local
+    name: mern_mongodb_config
+  redis_data:
+    driver: local
+    name: mern_redis_data
+  app_logs:
+    driver: local
+    name: mern_app_logs
