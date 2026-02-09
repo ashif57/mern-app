@@ -1,19 +1,18 @@
 const express = require('express');
 const auth = require('../../middlewares/auth');
 const validate = require('../../middlewares/validate');
-const userValidation = require('../../validations/user.validation');
-const { userController } = require('../../controllers');
+const officeValidation = require('../../validations/office.validation');
+const { officeController } = require('../../controllers');
 
 const router = express.Router();
 
-
 /**
  * @swagger
- * /users:
+ * /offices:
  *   post:
- *     summary: Create a user
- *     description: Only admins can create other users.
- *     tags: [Users]
+ *     summary: Create an office
+ *     description: Only admins can create offices.
+ *     tags: [Offices]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -24,47 +23,33 @@ const router = express.Router();
  *             type: object
  *             required:
  *               - name
- *               - email
- *               - password
- *               - role
  *             properties:
  *               name:
  *                 type: string
- *               email:
+ *               address:
  *                 type: string
- *                 format: email
- *                 description: must be unique
- *               password:
+ *               manager:
  *                 type: string
- *                 format: password
- *                 minLength: 8
- *                 description: At least one number and one letter
- *               role:
- *                  type: string
- *                  enum: [user, admin]
+ *                 description: User ID of the manager
  *             example:
- *               name: fake name
- *               email: fake@example.com
- *               password: password1
- *               role: user
+ *               name: HQ
+ *               address: 123 Main St
+ *               manager: 5ebac534954b54139806c112
  *     responses:
  *       "201":
  *         description: Created
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/User'
- *       "400":
- *         $ref: '#/components/responses/DuplicateEmail'
+ *               $ref: '#/components/schemas/Office'
  *       "401":
  *         $ref: '#/components/responses/Unauthorized'
  *       "403":
  *         $ref: '#/components/responses/Forbidden'
  *
  *   get:
- *     summary: Get all users
- *     description: Only admins can retrieve all users.
- *     tags: [Users]
+ *     summary: Get all offices
+ *     tags: [Offices]
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -72,12 +57,7 @@ const router = express.Router();
  *         name: name
  *         schema:
  *           type: string
- *         description: User name
- *       - in: query
- *         name: role
- *         schema:
- *           type: string
- *         description: User role
+ *         description: Office name
  *       - in: query
  *         name: sortBy
  *         schema:
@@ -89,7 +69,7 @@ const router = express.Router();
  *           type: integer
  *           minimum: 1
  *         default: 10
- *         description: Maximum number of users
+ *         description: Maximum number of offices
  *       - in: query
  *         name: page
  *         schema:
@@ -108,7 +88,7 @@ const router = express.Router();
  *                 results:
  *                   type: array
  *                   items:
- *                     $ref: '#/components/schemas/User'
+ *                     $ref: '#/components/schemas/Office'
  *                 page:
  *                   type: integer
  *                   example: 1
@@ -123,22 +103,18 @@ const router = express.Router();
  *                   example: 1
  *       "401":
  *         $ref: '#/components/responses/Unauthorized'
- *       "403":
- *         $ref: '#/components/responses/Forbidden'
  */
 router
   .route('/')
-  .post(auth('manageUsers'), validate(userValidation.createUser), userController.createUser)
-  .get(auth('getUsers'), validate(userValidation.getUsers), userController.getUsers);
-
+  .post(auth('manageOffices'), validate(officeValidation.createOffice), officeController.createOffice)
+  .get(auth('getUsers'), validate(officeValidation.getOffices), officeController.getOffices);
 
 /**
  * @swagger
- * /users/{id}:
+ * /offices/{id}:
  *   get:
- *     summary: Get a user
- *     description: Logged in users can fetch only their own user information. Only admins can fetch other users.
- *     tags: [Users]
+ *     summary: Get an office
+ *     tags: [Offices]
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -147,25 +123,23 @@ router
  *         required: true
  *         schema:
  *           type: string
- *         description: User id
+ *         description: Office id
  *     responses:
  *       "200":
  *         description: OK
  *         content:
  *           application/json:
  *             schema:
- *                $ref: '#/components/schemas/User'
+ *                $ref: '#/components/schemas/Office'
  *       "401":
  *         $ref: '#/components/responses/Unauthorized'
- *       "403":
- *         $ref: '#/components/responses/Forbidden'
  *       "404":
  *         $ref: '#/components/responses/NotFound'
  *
  *   patch:
- *     summary: Update a user
- *     description: Logged in users can only update their own information. Only admins can update other users.
- *     tags: [Users]
+ *     summary: Update an office
+ *     description: Only admins can update offices.
+ *     tags: [Offices]
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -174,7 +148,7 @@ router
  *         required: true
  *         schema:
  *           type: string
- *         description: User id
+ *         description: Office id
  *     requestBody:
  *       required: true
  *       content:
@@ -184,28 +158,20 @@ router
  *             properties:
  *               name:
  *                 type: string
- *               email:
+ *               address:
  *                 type: string
- *                 format: email
- *                 description: must be unique
- *               password:
+ *               manager:
  *                 type: string
- *                 format: password
- *                 minLength: 8
- *                 description: At least one number and one letter
  *             example:
- *               name: fake name
- *               email: fake@example.com
- *               password: password1
+ *               name: HQ Updated
+ *               address: 123 Main St
  *     responses:
  *       "200":
  *         description: OK
  *         content:
  *           application/json:
  *             schema:
- *                $ref: '#/components/schemas/User'
- *       "400":
- *         $ref: '#/components/responses/DuplicateEmail'
+ *                $ref: '#/components/schemas/Office'
  *       "401":
  *         $ref: '#/components/responses/Unauthorized'
  *       "403":
@@ -214,9 +180,9 @@ router
  *         $ref: '#/components/responses/NotFound'
  *
  *   delete:
- *     summary: Delete a user
- *     description: Logged in users can delete only themselves. Only admins can delete other users.
- *     tags: [Users]
+ *     summary: Delete an office
+ *     description: Only admins can delete offices.
+ *     tags: [Offices]
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -225,7 +191,7 @@ router
  *         required: true
  *         schema:
  *           type: string
- *         description: User id
+ *         description: Office id
  *     responses:
  *       "200":
  *         description: No content
@@ -237,9 +203,9 @@ router
  *         $ref: '#/components/responses/NotFound'
  */
 router
-  .route('/:userId')
-  .get(auth('getUsers'), validate(userValidation.getUser), userController.getUser)
-  .patch(auth('manageUsers'), validate(userValidation.updateUser), userController.updateUser)
-  .delete(auth('manageUsers'), validate(userValidation.deleteUser), userController.deleteUser);
+  .route('/:officeId')
+  .get(auth('getUsers'), validate(officeValidation.getOffice), officeController.getOffice)
+  .patch(auth('manageOffices'), validate(officeValidation.updateOffice), officeController.updateOffice)
+  .delete(auth('manageOffices'), validate(officeValidation.deleteOffice), officeController.deleteOffice);
 
 module.exports = router;
